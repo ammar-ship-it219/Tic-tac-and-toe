@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tic-Tac-Toe AI — By AMMAR</title>
+<style>
+:root{
+  --bg:#0f1724;
+  --accent:#7c3aed;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(270deg,#0f1724,#071021,#0f1724);background-size:600% 600%;animation: gradientBG 15s ease infinite;display:flex;justify-content:center;align-items:center;color:#e6eef8;}
+@keyframes gradientBG{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+.wrap{max-width:400px;margin:28px auto;padding:18px;text-align:center;}
+header{margin-bottom:10px;}
+h1{margin:0;font-size:28px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:20px;}
+#board{display:grid;grid-template-columns:repeat(3,100px);grid-template-rows:repeat(3,100px);gap:5px;justify-content:center;margin:auto;}
+.cell{width:100px;height:100px;background:linear-gradient(135deg,#0b1220,#7c3aed);display:flex;justify-content:center;align-items:center;font-size:48px;font-weight:bold;color:#fff;cursor:pointer;border-radius:12px;transition:0.3s;}
+.cell:hover{transform:scale(1.1);}
+button.btn{margin-top:20px;background:#7c3aed;border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;}
+.modeBtn{margin:5px;padding:6px 12px;border-radius:8px;border:none;font-weight:700;cursor:pointer;color:#fff;background:#14b8a6;}
+.modeBtn.active{background:#ffd700;color:#000;}
+footer{margin-top:20px;color:#94a3b8;font-size:13px;text-align:center;transition: all 0.5s ease; font-weight:bold;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>By AMMAR</h1>
+<div class="subtitle">Tic-Tac-Toe AI — Play against friend or smart AI!</div>
+</header>
+
+<div>
+<button class="modeBtn active" id="twoPlayerBtn">2 Player</button>
+<button class="modeBtn" id="aiBtn">Play vs AI</button>
+</div>
+
+<div id="board"></div>
+<button class="btn" id="restartBtn">Restart Game</button>
+<footer id="footerText">Made with ♥ By AMMAR — enjoy!</footer>
+</div>
+
+<script>
+const boardEl = document.getElementById('board');
+const footerText = document.getElementById('footerText');
+const restartBtn = document.getElementById('restartBtn');
+const twoPlayerBtn = document.getElementById('twoPlayerBtn');
+const aiBtn = document.getElementById('aiBtn');
+
+let board = Array(9).fill('');
+let currentPlayer = 'X';
+let gameOver = false;
+let aiMode = false;
+
+// Render board
+function renderBoard(){
+    boardEl.innerHTML='';
+    board.forEach((cell, idx)=>{
+        const cellEl = document.createElement('div');
+        cellEl.classList.add('cell');
+        cellEl.textContent = cell;
+        cellEl.addEventListener('click', ()=>handleMove(idx));
+        boardEl.appendChild(cellEl);
+    });
+}
+
+// Handle move
+function handleMove(idx){
+    if(board[idx] !== '' || gameOver) return;
+    board[idx] = currentPlayer;
+    checkWinner();
+    renderBoard();
+    if(aiMode && !gameOver && currentPlayer==='X'){
+        currentPlayer='O';
+        setTimeout(aiMove, 300);
+    } else if(!aiMode){
+        currentPlayer = currentPlayer==='X'?'O':'X';
+    }
+}
+
+// AI move using Minimax
+function aiMove(){
+    if(gameOver) return;
+    let bestScore = -Infinity;
+    let move;
+    for(let i=0;i<9;i++){
+        if(board[i]===''){
+            board[i]='O';
+            let score = minimax(board,false);
+            board[i]='';
+            if(score>bestScore){
+                bestScore=score;
+                move=i;
+            }
+        }
+    }
+    board[move]='O';
+    checkWinner();
+    renderBoard();
+    if(!gameOver) currentPlayer='X';
+}
+
+// Minimax algorithm
+function minimax(b, isMax){
+    let winner = getWinner(b);
+    if(winner==='O') return 1;
+    if(winner==='X') return -1;
+    if(!b.includes('')) return 0;
+
+    if(isMax){
+        let best = -Infinity;
+        for(let i=0;i<9;i++){
+            if(b[i]===''){
+                b[i]='O';
+                best=Math.max(best,minimax(b,false));
+                b[i]='';
+            }
+        }
+        return best;
+    } else {
+        let best = Infinity;
+        for(let i=0;i<9;i++){
+            if(b[i]===''){
+                b[i]='X';
+                best=Math.min(best,minimax(b,true));
+                b[i]='';
+            }
+        }
+        return best;
+    }
+}
+
+// Check winner
+function getWinner(b){
+    const winPatterns=[
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+    for(let pattern of winPatterns){
+        const [a,b,c]=pattern;
+        if(b[a] && b[a]===b[b] && b[a]===b[c]){
+            return b[a];
+        }
+    }
+    return null;
+}
+
+function checkWinner(){
+    let winner=getWinner(board);
+    if(winner){
+        gameOver=true;
+        footerText.textContent=`🎉 Player ${winner} Wins! Shocked by AMMAR! 💥`;
+        footerText.style.color='#ffd700';
+        footerText.style.fontSize='20px';
+    } else if(!board.includes('')){
+        gameOver=true;
+        footerText.textContent=`🤝 Draw! Shocked by AMMAR! 💥`;
+        footerText.style.color='#ffd700';
+        footerText.style.fontSize='20px';
+    }
+}
+
+// Restart
+restartBtn.addEventListener('click', ()=>{
+    board = Array(9).fill('');
+    currentPlayer='X';
+    gameOver=false;
+    footerText.textContent='Made with ♥ By AMMAR — enjoy!';
+    footerText.style.color='#e6eef8';
+    footerText.style.fontSize='13px';
+    renderBoard();
+});
+
+// Mode buttons
+twoPlayerBtn.addEventListener('click', ()=>{
+    aiMode=false;
+    twoPlayerBtn.classList.add('active');
+    aiBtn.classList.remove('active');
+    restartBtn.click();
+});
+aiBtn.addEventListener('click', ()=>{
+    aiMode=true;
+    aiBtn.classList.add('active');
+    twoPlayerBtn.classList.remove('active');
+    restartBtn.click();
+});
+
+// Initial render
+renderBoard();
+</script>
+</body>
+</html>
